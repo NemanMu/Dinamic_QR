@@ -294,7 +294,67 @@ def dashboard():
         user=user,
         has_active=active_info is not None,
         sessions=past_sessions,
+        profile_saved=request.args.get("profile_saved") == "1",
     )
+
+@app.route("/profile/edit", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+    user = current_user()
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        current_password = request.form.get("current_password", "")
+        new_password = request.form.get("new_password", "")
+
+        if not name or not email or not current_password:
+            return render_template(
+                "edit_profile.html", user=user,
+                error="Please fill in your name, email, and current password.",
+            )
+
+        if new_password and len(new_password) < 6:
+            return render_template(
+                "edit_profile.html", user=user,
+                error="New password must be at least 6 characters.",
+            )
+
+        conn = get_db()
+        row = conn.execute(
+            "SELECT password_hash FROM users WHERE id = %s", (user["id"],)
+        ).fetchone()
+
+        if row is None or not check_password_hash(row[0], current_password):
+            conn.close()
+            return render_template(
+                "edit_profile.html", user=user,
+                error="Current password is incorrect.",
+            )
+
+        try:
+            if new_password:
+                conn.execute(
+                    "UPDATE users SET name = %s, email = %s, password_hash = %s WHERE id = %s",
+                    (name, email, generate_password_hash(new_password), user["id"]),
+                )
+            else:
+                conn.execute(
+                    "UPDATE users SET name = %s, email = %s WHERE id = %s",
+                    (name, email, user["id"]),
+                )
+            conn.commit()
+        except psycopg.IntegrityError:
+            conn.close()
+            return render_template(
+                "edit_profile.html", user=user,
+                error="This email is already in use by another account.",
+            )
+        conn.close()
+
+        return redirect(url_for("dashboard", profile_saved=1))
+
+    return render_template("edit_profile.html", user=user, error=None)
 
 @app.route("/new-session", methods=["POST"])
 @login_required

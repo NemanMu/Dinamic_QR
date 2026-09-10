@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit Profile</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 32px;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .logo { color: #fff; font-weight: 700; font-size: 18px; }
+
+        .nav-buttons a {
+            color: #fff;
+            font-size: 14px;
+            text-decoration: none;
+            opacity: 0.9;
+        }
+
+        main {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 10px 24px 60px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .card h1 {
+            font-size: 20px;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .card p.subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .error-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .field-hint {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 6px;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 24px 0;
+        }
+
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 13px 44px 13px 14px;
+            font-size: 15px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .password-field {
+            position: relative;
+        }
+
+        .eye-toggle {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            line-height: 1;
+            color: #6b7280;
+        }
+
+        .eye-toggle:hover {
+            color: #4f46e5;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">📱 Dynamic QR Attendance</div>
+        <div class="nav-buttons">
+            <a href="/dashboard">← Dashboard</a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="card">
+            <h1>Edit Profile</h1>
+            <p class="subtitle">Update your name, email, or password</p>
+
+            {% if error %}
+                <div class="error-box">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="/profile/edit">
+                <div class="field">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" value="{{ user.name }}" required>
+                </div>
+
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="{{ user.email }}" required>
+                </div>
+
+                <hr class="divider">
+
+                <div class="field">
+                    <label for="new_password">New Password</label>
+                    <div class="password-field">
+                        <input type="password" id="new_password" name="new_password" placeholder="Leave blank to keep current password">
+                        <button type="button" class="eye-toggle" data-target="new_password" onclick="togglePassword(this)">👁️</button>
+                    </div>
+                    <div class="field-hint">At least 6 characters. Leave blank if you don't want to change it.</div>
+                </div>
+
+                <div class="field">
+                    <label for="current_password">Current Password</label>
+                    <div class="password-field">
+                        <input type="password" id="current_password" name="current_password" placeholder="Required to save changes" required>
+                        <button type="button" class="eye-toggle" data-target="current_password" onclick="togglePassword(this)">👁️</button>
+                    </div>
+                    <div class="field-hint">Enter your current password to confirm these changes.</div>
+                </div>
+
+                <button type="submit">Save Changes</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function togglePassword(btn) {
+            var input = document.getElementById(btn.getAttribute('data-target'));
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
+        }
+    </script>
+</body>
+</html>

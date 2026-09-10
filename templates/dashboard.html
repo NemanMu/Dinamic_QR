@@ -47,10 +47,34 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
 
+        .name-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
         .header-card h1 {
             font-size: 20px;
             color: #1f2937;
-            margin-bottom: 4px;
+        }
+
+        .edit-profile-btn {
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-size: 13px;
+            text-decoration: none;
+            color: #6b7280;
+            flex-shrink: 0;
+        }
+
+        .edit-profile-btn:hover {
+            background: #f3f4f6;
+            color: #4f46e5;
         }
 
         .header-card p {
@@ -205,7 +229,15 @@
 
     <main>
         <div class="header-card">
-            <h1>Hello, {{ user.name }}</h1>
+            {% if profile_saved %}
+                <div class="active-banner" style="margin-bottom:16px;">
+                    <span>✓ Profile updated</span>
+                </div>
+            {% endif %}
+            <div class="name-row">
+                <h1>Hello, {{ user.name }}</h1>
+                <a class="edit-profile-btn" href="/profile/edit" title="Edit Profile">✏️</a>
+            </div>
             <p>Start a new attendance session or view your past sessions.</p>
 
             {% if has_active %}
