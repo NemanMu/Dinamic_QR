@@ -1,7 +1,7 @@
 import io
 import os
 import secrets
-import sqlite3
+import psycopg
 import time
 import uuid
 from datetime import datetime
@@ -22,7 +22,17 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 QR_INTERVAL_SECONDS = 10
 FORM_SESSION_TIMEOUT_SECONDS = 600
 
-DB_PATH = "attendance.db"
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL environment variable is not set.")
+
+# Some providers still expose postgres:// URLs; psycopg expects postgresql://.
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+def get_db():
+    return psycopg.connect(DATABASE_URL)
 
 # Her öğretmenin o anki aktif QR oturumunu tutan bellek-içi sözlük:
 # { user_id: {"secret", "totp", "class_session_id"} }
@@ -33,45 +43,43 @@ active_sessions = {}
 
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT NOT NULL UNIQUE,
-            password_hash TEXT NOT NULL,
-            created_at TEXT NOT NULL
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS class_sessions (
-            id TEXT PRIMARY KEY,
-            teacher_id INTEGER NOT NULL,
-            created_at TEXT NOT NULL,
-            ended_at TEXT
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS attendance (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            teacher_id INTEGER NOT NULL,
-            class_session_id TEXT NOT NULL,
-            full_name TEXT NOT NULL,
-            student_id TEXT NOT NULL,
-            timestamp TEXT NOT NULL,
-            UNIQUE(teacher_id, student_id, class_session_id)
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS pending_scans (
-            session_id TEXT PRIMARY KEY,
-            teacher_id INTEGER NOT NULL,
-            class_session_id TEXT NOT NULL,
-            created_at REAL NOT NULL
-        )
-    """)
-    conn.commit()
-    conn.close()
+    with get_db() as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS class_sessions (
+                id TEXT PRIMARY KEY,
+                teacher_id INTEGER NOT NULL,
+                created_at TEXT NOT NULL,
+                ended_at TEXT
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS attendance (
+                id SERIAL PRIMARY KEY,
+                teacher_id INTEGER NOT NULL,
+                class_session_id TEXT NOT NULL,
+                full_name TEXT NOT NULL,
+                student_id TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                UNIQUE(teacher_id, student_id, class_session_id)
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS pending_scans (
+                session_id TEXT PRIMARY KEY,
+                teacher_id INTEGER NOT NULL,
+                class_session_id TEXT NOT NULL,
+                created_at DOUBLE PRECISION NOT NULL
+            )
+        """)
 
 
 init_db()
@@ -79,7 +87,7 @@ init_db()
 
 def cleanup_expired_scans(conn):
     cutoff = time.time() - FORM_SESSION_TIMEOUT_SECONDS
-    conn.execute("DELETE FROM pending_scans WHERE created_at < ?", (cutoff,))
+    conn.execute("DELETE FROM pending_scans WHERE created_at < %s", (cutoff,))
 
 
 def format_dt(iso_string):
@@ -89,9 +97,9 @@ def format_dt(iso_string):
 
 
 def get_user_by_id(user_id):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     row = conn.execute(
-        "SELECT id, name, email FROM users WHERE id = ?", (user_id,)
+        "SELECT id, name, email FROM users WHERE id = %s", (user_id,)
     ).fetchone()
     conn.close()
     if row is None:
@@ -141,17 +149,17 @@ def register():
     if len(password) < 6:
         return render_template("register.html", error="Şifre en az 6 karakter olmalı.")
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     try:
         conn.execute(
-            "INSERT INTO users (name, email, password_hash, created_at) VALUES (?, ?, ?, ?)",
+            "INSERT INTO users (name, email, password_hash, created_at) VALUES (%s, %s, %s, %s)",
             (name, email, generate_password_hash(password), datetime.now().isoformat()),
         )
         conn.commit()
         user_id = conn.execute(
-            "SELECT id FROM users WHERE email = ?", (email,)
+            "SELECT id FROM users WHERE email = %s", (email,)
         ).fetchone()[0]
-    except sqlite3.IntegrityError:
+    except psycopg.IntegrityError:
         conn.close()
         return render_template("register.html", error="Bu e-posta zaten kayıtlı.")
     conn.close()
@@ -168,9 +176,9 @@ def login():
     email = request.form.get("email", "").strip().lower()
     password = request.form.get("password", "")
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     row = conn.execute(
-        "SELECT id, password_hash FROM users WHERE email = ?", (email,)
+        "SELECT id, password_hash FROM users WHERE email = %s", (email,)
     ).fetchone()
     conn.close()
 
@@ -196,17 +204,17 @@ def dashboard():
     user = current_user()
     active_info = active_sessions.get(user["id"])
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     session_rows = conn.execute(
         "SELECT id, created_at, ended_at FROM class_sessions "
-        "WHERE teacher_id = ? ORDER BY created_at DESC",
+        "WHERE teacher_id = %s ORDER BY created_at DESC",
         (user["id"],),
     ).fetchall()
 
     past_sessions = []
     for sid, created_at, ended_at in session_rows:
         count = conn.execute(
-            "SELECT COUNT(*) FROM attendance WHERE teacher_id = ? AND class_session_id = ?",
+            "SELECT COUNT(*) FROM attendance WHERE teacher_id = %s AND class_session_id = %s",
             (user["id"], sid),
         ).fetchone()[0]
         is_active = active_info is not None and active_info["class_session_id"] == sid
@@ -235,10 +243,10 @@ def new_session():
 
     # Zaten aktif bir oturum varsa, yenisini başlatmadan önce onu kapat.
     old_info = active_sessions.pop(user["id"], None)
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     if old_info:
         conn.execute(
-            "UPDATE class_sessions SET ended_at = ? WHERE id = ?",
+            "UPDATE class_sessions SET ended_at = %s WHERE id = %s",
             (datetime.now().isoformat(), old_info["class_session_id"]),
         )
 
@@ -251,10 +259,10 @@ def new_session():
     }
 
     conn.execute(
-        "INSERT INTO class_sessions (id, teacher_id, created_at, ended_at) VALUES (?, ?, ?, NULL)",
+        "INSERT INTO class_sessions (id, teacher_id, created_at, ended_at) VALUES (%s, %s, %s, NULL)",
         (class_session_id, user["id"], datetime.now().isoformat()),
     )
-    conn.execute("DELETE FROM pending_scans WHERE teacher_id = ?", (user["id"],))
+    conn.execute("DELETE FROM pending_scans WHERE teacher_id = %s", (user["id"],))
     conn.commit()
     conn.close()
 
@@ -270,9 +278,9 @@ def end_session():
     ended_session_id = ""
     if info:
         ended_session_id = info["class_session_id"]
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db()
         conn.execute(
-            "UPDATE class_sessions SET ended_at = ? WHERE id = ?",
+            "UPDATE class_sessions SET ended_at = %s WHERE id = %s",
             (datetime.now().isoformat(), ended_session_id),
         )
         conn.commit()
@@ -339,10 +347,10 @@ def attend_form():
         )
 
     session_id = secrets.token_urlsafe(24)
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     cleanup_expired_scans(conn)
     conn.execute(
-        "INSERT INTO pending_scans (session_id, teacher_id, class_session_id, created_at) VALUES (?, ?, ?, ?)",
+        "INSERT INTO pending_scans (session_id, teacher_id, class_session_id, created_at) VALUES (%s, %s, %s, %s)",
         (session_id, int(teacher_id_raw), info["class_session_id"], time.time()),
     )
     conn.commit()
@@ -357,11 +365,11 @@ def attend_submit():
     full_name = request.form.get("full_name", "").strip()
     student_id = request.form.get("student_id", "").strip()
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     cleanup_expired_scans(conn)
 
     row = conn.execute(
-        "SELECT teacher_id, class_session_id FROM pending_scans WHERE session_id = ?",
+        "SELECT teacher_id, class_session_id FROM pending_scans WHERE session_id = %s",
         (session_id,),
     ).fetchone()
 
@@ -385,15 +393,15 @@ def attend_submit():
 
     try:
         conn.execute(
-            "INSERT INTO attendance (teacher_id, class_session_id, full_name, student_id, timestamp) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO attendance (teacher_id, class_session_id, full_name, student_id, timestamp) VALUES (%s, %s, %s, %s, %s)",
             (teacher_id, class_session_id, full_name, student_id, datetime.now().isoformat()),
         )
         conn.commit()
         message = f"{full_name} ({student_id}) için yoklama kaydedildi."
-    except sqlite3.IntegrityError:
+    except psycopg.IntegrityError:
         message = "Bu yoklama zaten kaydedilmiş görünüyor."
     finally:
-        conn.execute("DELETE FROM pending_scans WHERE session_id = ?", (session_id,))
+        conn.execute("DELETE FROM pending_scans WHERE session_id = %s", (session_id,))
         conn.commit()
         conn.close()
 
@@ -408,9 +416,9 @@ def attend_submit():
 def report_detail(session_id):
     user = current_user()
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     owner_row = conn.execute(
-        "SELECT teacher_id, created_at FROM class_sessions WHERE id = ?", (session_id,)
+        "SELECT teacher_id, created_at FROM class_sessions WHERE id = %s", (session_id,)
     ).fetchone()
 
     if owner_row is None or owner_row[0] != user["id"]:
@@ -419,7 +427,7 @@ def report_detail(session_id):
 
     rows = conn.execute(
         "SELECT full_name, student_id, timestamp FROM attendance "
-        "WHERE teacher_id = ? AND class_session_id = ? ORDER BY timestamp",
+        "WHERE teacher_id = %s AND class_session_id = %s ORDER BY timestamp",
         (user["id"], session_id),
     ).fetchall()
     conn.close()

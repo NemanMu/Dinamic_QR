@@ -4,3 +4,4 @@ qrcode
 Pillow
 Werkzeug
 gunicorn
+psycopg[binary]
