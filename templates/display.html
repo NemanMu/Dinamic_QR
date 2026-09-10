@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Yoklama QR Kodu</title>
+    <title>Attendance QR Code</title>
     {% if active %}
         <meta http-equiv="refresh" content="10">
     {% endif %}
@@ -85,28 +85,28 @@
 </head>
 <body>
     {% if active %}
-        <h1>Telefonunuzla QR kodu okutun</h1>
-        <img src="/qr.png?ts={{ range(1, 99999) | random }}" alt="QR Kod">
-        <p class="hint">Kod her 10 saniyede bir yenilenir.</p>
+        <h1>Scan the QR Code with Your Phone</h1>
+        <img src="/qr.png?ts={{ range(1, 99999) | random }}" alt="QR Code">
+        <p class="hint">The code refreshes every 10 seconds.</p>
 
         <form method="POST" action="/end-session">
-            <button type="submit" class="stop-btn">Oturumu Durdur</button>
+            <button type="submit" class="stop-btn">End Session</button>
         </form>
     {% elif ended_session_id %}
         <div class="check">✓</div>
-        <h1>Oturum durduruldu</h1>
-        <p class="hint">Yoklama artık kabul edilmiyor.</p>
+        <h1>Session Ended</h1>
+        <p class="hint">Attendance is no longer being accepted.</p>
 
         <div class="actions">
-            <a class="primary" href="/dashboard">Profile Dön</a>
-            <a class="secondary" href="/report/{{ ended_session_id }}">Kaydolan İsimlere Git</a>
+            <a class="primary" href="/dashboard">Return to Dashboard</a>
+            <a class="secondary" href="/report/{{ ended_session_id }}">View Submitted Names</a>
         </div>
     {% else %}
-        <h1>Oturum henüz başlatılmadı</h1>
-        <p class="hint">Panelinizden "Yeni QR Oluştur" butonuna basın.</p>
+        <h1>Session not started yet</h1>
+        <p class="hint">Press the "Create New QR" button in your panel.</p>
 
         <div class="actions">
-            <a class="primary" href="/dashboard">Panele Dön</a>
+            <a class="primary" href="/dashboard">Return to Dashboard</a>
         </div>
     {% endif %}
 </body>

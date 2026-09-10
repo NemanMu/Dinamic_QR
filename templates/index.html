@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dinamik QR ile Yoklama</title>
+    <title>Dynamic QR Attendance</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -151,64 +151,64 @@
 </head>
 <body>
     <nav>
-        <div class="logo">📱 Dinamik QR Yoklama</div>
+        <div class="logo">📱 Dynamic QR Attendance</div>
         <div class="nav-buttons">
             {% if user %}
-                <a class="nav-btn ghost" href="/logout">Çıkış Yap</a>
-                <a class="nav-btn solid" href="/dashboard">Panelim</a>
+                <a class="nav-btn ghost" href="/logout">Logout</a>
+                <a class="nav-btn solid" href="/dashboard">My Dashboard</a>
             {% else %}
-                <a class="nav-btn ghost" href="/login">Giriş Yap</a>
-                <a class="nav-btn solid" href="/register">Hesap Oluştur</a>
+                <a class="nav-btn ghost" href="/login">Login</a>
+                <a class="nav-btn solid" href="/register">Create Account</a>
             {% endif %}
         </div>
     </nav>
 
     <main>
-        <h1>Yoklamayı sahte imzadan kurtarın</h1>
+        <h1>Free Yourself from Fake Signatures</h1>
         <p class="lead">
-            Her 10 saniyede bir yenilenen bir QR kod gösterin. Öğrenciler telefonlarıyla
-            okutup birkaç saniyede yoklamalarını onaylasın. Kağıt yok, arkadaşınıza imza
-            attırma yok, sonradan eklenen isim yok.
+            Display a QR code that refreshes every 10 seconds. Students can scan it with their phones
+            and submit their attendance within a few seconds. No paper, no need to ask friends for signatures,
+            and no last-minute added names.
         </p>
         <a class="cta" href="{{ '/dashboard' if user else '/register' }}">
             {{ 'Panelime git' if user else 'Ücretsiz başla' }}
         </a>
 
         <div class="steps">
-            <h2>Nasıl çalışır?</h2>
+            <h2>How It Works</h2>
             <div class="step">
                 <div class="step-num">1</div>
                 <div class="step-text">
-                    <h3>QR kodu ekrana yansıtın</h3>
-                    <p>Panelinizden "Yeni QR Oluştur"a basın, projeksiyona veya sınıf ekranına yansıtın.</p>
+                    <h3>Display the QR Code</h3>
+                    <p>Press "Create New QR" from your panel, and display it on a projector or classroom screen.</p>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">2</div>
                 <div class="step-text">
-                    <h3>QR sürekli kendini yeniler</h3>
-                    <p>Kod her 10 saniyede bir değişir, böylece bir öğrenci ekran görüntüsünü başkasına gönderip onun yerine yoklama girdiremez.</p>
+                    <h3>QR Code Refreshes Automatically</h3>
+                    <p>The code changes every 10 seconds, so a student cannot take a screenshot and share it with someone else to submit attendance on their behalf.</p>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">3</div>
                 <div class="step-text">
-                    <h3>Öğrenci telefonuyla okutur</h3>
-                    <p>Kamerayla okutulan QR, öğrenciyi ad soyad ve öğrenci numarasını gireceği kısa bir forma yönlendirir.</p>
+                    <h3>Student Scans with Phone</h3>
+                    <p>The QR code, when scanned with a camera, directs the student to a short form where they can enter their name and student ID.</p>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">4</div>
                 <div class="step-text">
-                    <h3>Sonuçları anında görün</h3>
-                    <p>Panelinizden kimlerin katıldığını, ne zaman girdiğini anlık olarak takip edin; geçmiş tüm oturumlarınız kayıtlı kalır.</p>
+                    <h3>View Results Instantly</h3>
+                    <p>Track who attended and when they submitted their attendance in real-time; all your past sessions are recorded.</p>
                 </div>
             </div>
         </div>
 
         <p class="why">
-            Her öğretim üyesinin kendi hesabı ve kendine özel QR oturumları vardır —
-            oturumlarınızı ve yoklama kayıtlarınızı yalnızca siz görebilirsiniz.
+            Each instructor has their own account and private QR sessions —
+            you are the only one who can see your sessions and attendance records.
         </p>
     </main>
 </body>

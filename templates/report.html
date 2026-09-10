@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Yoklama Raporu</title>
+    <title>Attendance Report</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: sans-serif; max-width: 600px; margin: 0 auto 40px; padding: 0 16px; }
@@ -31,13 +31,13 @@
 </head>
 <body>
     <div class="topbar">
-        <a href="/dashboard">Profile Dön</a>
+        <a href="/dashboard">Back to Profile</a>
     </div>
 
-    <h2>Alınan Yoklamalar ({{ rows|length }})</h2>
-    {% if created_at %}<p style="color:#6b7280;margin-bottom:16px;">Oturum tarihi: {{ created_at }}</p>{% endif %}
+    <h2>Attendance Records ({{ rows|length }})</h2>
+    {% if created_at %}<p style="color:#6b7280;margin-bottom:16px;">Session Date: {{ created_at }}</p>{% endif %}
     <table>
-        <tr><th>Ad Soyad</th><th>Öğrenci No</th><th>Zaman</th></tr>
+        <tr><th>Full Name</th><th>Student ID</th><th>Time</th></tr>
         {% for full_name, student_id, ts in rows %}
         <tr><td>{{ full_name }}</td><td>{{ student_id }}</td><td>{{ ts }}</td></tr>
         {% endfor %}

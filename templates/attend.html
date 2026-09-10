@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Yoklama Girişi</title>
+    <title>Attendance</title>
     <style>
         * { box-sizing: border-box; }
 
@@ -120,26 +120,26 @@
         <div class="icon">📋</div>
 
         {% if error %}
-            <h1>Yoklama Alınamadı</h1>
+            <h1>Attendance Not Received</h1>
             <div class="error-box">{{ error }}</div>
         {% else %}
-            <h1>Yoklama Girişi</h1>
-            <p class="subtitle">Bilgilerinizi girip yoklamanızı onaylayın</p>
+            <h1>Attendance Entry</h1>
+            <p class="subtitle">Enter your information to confirm attendance</p>
 
             <form method="POST" action="/attend">
                 <input type="hidden" name="session_id" value="{{ session_id }}">
 
                 <div class="field">
-                    <label for="full_name">Ad Soyad</label>
-                    <input type="text" id="full_name" name="full_name" placeholder="Örn. Ayşe Yılmaz" required autofocus>
+                    <label for="full_name">Full Name</label>
+                    <input type="text" id="full_name" name="full_name" placeholder="" required autofocus>
                 </div>
 
                 <div class="field">
-                    <label for="student_id">Öğrenci Numarası</label>
-                    <input type="text" id="student_id" name="student_id" placeholder="Örn. 20231234" required>
+                    <label for="student_id">Student ID</label>
+                    <input type="text" id="student_id" name="student_id" placeholder="" required>
                 </div>
 
-                <button type="submit">Yoklamayı Onayla</button>
+                <button type="submit">Confirm Attendance</button>
             </form>
         {% endif %}
     </div>

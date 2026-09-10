@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Yoklama Kontrol Paneli</title>
+    <title>Attendance Control Panel</title>
     <style>
         * { box-sizing: border-box; }
 
@@ -140,28 +140,28 @@
 <body>
     <div class="card">
         <div class="icon">🎓</div>
-        <h1>Yoklama Kontrol Paneli</h1>
-        <p class="subtitle">Oturumu buradan başlatın ve yönetin</p>
+        <h1>Attendance Control Panel</h1>
+        <p class="subtitle">Start and manage your session here</p>
 
         {% if active %}
-            <div class="status active"><span class="dot"></span> Oturum aktif</div>
+            <div class="status active"><span class="dot"></span> Session active</div>
         {% else %}
-            <div class="status inactive"><span class="dot"></span> Oturum başlatılmadı</div>
+            <div class="status inactive"><span class="dot"></span> Session not started</div>
         {% endif %}
 
-        <div class="count">Bu oturumda <strong>{{ count }}</strong> yoklama alındı</div>
+        <div class="count">In this session, <strong>{{ count }}</strong> attendance records were collected</div>
 
         {% if active %}
-            <a class="btn btn-primary" href="/display" target="_blank">QR Ekranını Aç</a>
-            <a class="btn btn-secondary" href="/report" target="_blank">Yoklama Raporunu Gör</a>
+            <a class="btn btn-primary" href="/display" target="_blank">Open QR Screen</a>
+            <a class="btn btn-secondary" href="/report" target="_blank">View Attendance Report</a>
             <form method="POST" action="/end-session">
-                <button type="submit" class="btn-danger">Oturumu Sonlandır</button>
+                <button type="submit" class="btn-danger">End Session</button>
             </form>
         {% else %}
             <form method="POST" action="/new-session">
-                <button type="submit" class="btn-primary">Yeni Yoklama Oturumu Başlat</button>
+                <button type="submit" class="btn-primary">Start New Attendance Session</button>
             </form>
-            <a class="btn btn-secondary" href="/report" target="_blank">Geçmiş Raporu Gör</a>
+            <a class="btn btn-secondary" href="/report" target="_blank">View Historical Reports</a>
         {% endif %}
     </div>
 </body>

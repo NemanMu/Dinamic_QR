@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Panelim</title>
+    <title>Profile</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -157,33 +157,33 @@
 </head>
 <body>
     <nav>
-        <div class="logo">📱 Dinamik QR Yoklama</div>
+        <div class="logo">📱 Dynamic QR Attendance</div>
         <div class="nav-buttons">
-            <a href="/">Ana Sayfa</a>
-            <a href="/logout">Çıkış Yap</a>
+            <a href="/">Home</a>
+            <a href="/logout">Logout</a>
         </div>
     </nav>
 
     <main>
         <div class="header-card">
-            <h1>Merhaba, {{ user.name }}</h1>
-            <p>Yeni bir yoklama oturumu başlatın ya da geçmiş oturumlarınıza göz atın.</p>
+            <h1>Hello, {{ user.name }}</h1>
+            <p>Start a new attendance session or view your past sessions.</p>
 
             {% if has_active %}
                 <div class="active-banner">
-                    <span>🟢 Aktif bir oturumunuz var</span>
-                    <a href="/display" target="_blank">Ekranı aç →</a>
+                    <span>🟢 Active session</span>
+                    <a href="/display" target="_blank">Open Screen →</a>
                 </div>
             {% endif %}
 
             <form method="POST" action="/new-session" target="_blank">
                 <button type="submit">
-                    {{ '+ Yeni QR Oluştur' if not has_active else '+ Yeni QR Oluştur (mevcut oturumu kapatır)' }}
+                    {{ '+ Create New QR' if not has_active else '+ Create New QR (closes current session)' }}
                 </button>
             </form>
         </div>
 
-        <div class="section-title">Geçmiş Oturumlarım</div>
+        <div class="section-title">Past Sessions</div>
 
         {% if sessions %}
             {% for s in sessions %}
@@ -192,18 +192,18 @@
                         <div class="date">
                             {{ s.created_at }}
                             {% if s.active %}
-                                <span class="badge active">Aktif</span>
+                                <span class="badge active">Active</span>
                             {% else %}
-                                <span class="badge ended">Kapandı</span>
+                                <span class="badge ended">Ended</span>
                             {% endif %}
                         </div>
-                        <div class="meta">{{ s.count }} kişi yoklama verdi</div>
+                        <div class="meta">{{ s.count }} people submitted attendance</div>
                     </div>
-                    <a class="view-btn" href="/report/{{ s.id }}" target="_blank">Kayıtları Gör</a>
+                    <a class="view-btn" href="/report/{{ s.id }}" target="_blank">View Records</a>
                 </div>
             {% endfor %}
         {% else %}
-            <div class="empty">Henüz bir yoklama oturumu oluşturmadınız.</div>
+            <div class="empty">You haven't created any attendance sessions yet.</div>
         {% endif %}
     </main>
 </body>
