@@ -14,9 +14,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-# Oturum çerezlerini imzalamak için gerekli. Üretimde bunu ortam değişkeninden
-# (env var) okuyun, yoksa sunucu her yeniden başladığında tüm kullanıcılar
-# oturumdan atılır (tekrar giriş yapmaları gerekir).
+
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 
 QR_INTERVAL_SECONDS = 10
@@ -27,18 +25,13 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL environment variable is not set.")
 
-# Some providers still expose postgres:// URLs; psycopg expects postgresql://.
+
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 def get_db():
     return psycopg.connect(DATABASE_URL)
 
-# Her öğretmenin o anki aktif QR oturumunu tutan bellek-içi sözlük:
-# { user_id: {"secret", "totp", "class_session_id"} }
-# NOT: Uygulama yeniden başladığında bu bilgi sıfırlanır (aktif oturumlar
-# kapanmış sayılır), ama hesaplar ve geçmiş yoklama kayıtları veritabanında
-# kalıcı olduğu için kaybolmaz.
 active_sessions = {}
 
 
@@ -123,17 +116,13 @@ def login_required(view_func):
     return wrapped
 
 
-# ----------------------------------------------------------------
-# HERKESE AÇIK TANITIM SAYFASI
-# ----------------------------------------------------------------
+
 @app.route("/")
 def landing():
     return render_template("index.html", user=current_user())
 
 
-# ----------------------------------------------------------------
-# HESAP OLUŞTURMA / GİRİŞ / ÇIKIŞ
-# ----------------------------------------------------------------
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "GET":
@@ -195,9 +184,7 @@ def logout():
     return redirect(url_for("landing"))
 
 
-# ----------------------------------------------------------------
-# ÖĞRETMEN PANELİ (giriş gerektirir)
-# ----------------------------------------------------------------
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -320,9 +307,6 @@ def qr_png():
     return send_file(buf, mimetype="image/png")
 
 
-# ----------------------------------------------------------------
-# ÖĞRENCİNİN TARAYINCA GÖRDÜĞÜ SAYFA (herkese açık)
-# ----------------------------------------------------------------
 @app.route("/attend", methods=["GET"])
 def attend_form():
     token = request.args.get("token", "")
@@ -408,9 +392,7 @@ def attend_submit():
     return render_template("success.html", message=message)
 
 
-# ----------------------------------------------------------------
-# TEK BİR OTURUMUN YOKLAMA LİSTESİ (giriş gerektirir, sadece sahibi görebilir)
-# ----------------------------------------------------------------
+
 @app.route("/report/<session_id>")
 @login_required
 def report_detail(session_id):
@@ -438,5 +420,4 @@ def report_detail(session_id):
 
 
 if __name__ == "__main__":
-    # debug=True sadece geliştirme aşamasında kullanılmalı.
     app.run(debug=True, host="0.0.0.0", port=5000)
