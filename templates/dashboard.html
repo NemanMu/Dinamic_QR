@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Panelim</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 32px;
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .logo { color: #fff; font-weight: 700; font-size: 18px; }
+
+        .nav-buttons { display: flex; gap: 14px; align-items: center; }
+
+        .nav-buttons a {
+            color: #fff;
+            font-size: 14px;
+            text-decoration: none;
+            opacity: 0.9;
+        }
+
+        main {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 10px 24px 60px;
+        }
+
+        .header-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .header-card h1 {
+            font-size: 20px;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .header-card p {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        .active-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: #dcfce7;
+            color: #15803d;
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .active-banner a {
+            color: #15803d;
+            text-decoration: underline;
+        }
+
+        button, .new-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        form { margin: 0; }
+
+        .section-title {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            margin: 28px 0 12px 4px;
+        }
+
+        .session-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.1);
+        }
+
+        .session-info .date {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 999px;
+        }
+
+        .badge.active { background: #dcfce7; color: #15803d; }
+        .badge.ended { background: #f3f4f6; color: #6b7280; }
+
+        .session-info .meta {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .session-card a.view-btn {
+            flex-shrink: 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4f46e5;
+            text-decoration: none;
+            border: 1.5px solid #e0e7ff;
+            padding: 8px 14px;
+            border-radius: 8px;
+        }
+
+        .empty {
+            color: rgba(255,255,255,0.85);
+            font-size: 14px;
+            text-align: center;
+            padding: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">📱 Dinamik QR Yoklama</div>
+        <div class="nav-buttons">
+            <a href="/">Ana Sayfa</a>
+            <a href="/logout">Çıkış Yap</a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="header-card">
+            <h1>Merhaba, {{ user.name }}</h1>
+            <p>Yeni bir yoklama oturumu başlatın ya da geçmiş oturumlarınıza göz atın.</p>
+
+            {% if has_active %}
+                <div class="active-banner">
+                    <span>🟢 Aktif bir oturumunuz var</span>
+                    <a href="/display" target="_blank">Ekranı aç →</a>
+                </div>
+            {% endif %}
+
+            <form method="POST" action="/new-session" target="_blank">
+                <button type="submit">
+                    {{ '+ Yeni QR Oluştur' if not has_active else '+ Yeni QR Oluştur (mevcut oturumu kapatır)' }}
+                </button>
+            </form>
+        </div>
+
+        <div class="section-title">Geçmiş Oturumlarım</div>
+
+        {% if sessions %}
+            {% for s in sessions %}
+                <div class="session-card">
+                    <div class="session-info">
+                        <div class="date">
+                            {{ s.created_at }}
+                            {% if s.active %}
+                                <span class="badge active">Aktif</span>
+                            {% else %}
+                                <span class="badge ended">Kapandı</span>
+                            {% endif %}
+                        </div>
+                        <div class="meta">{{ s.count }} kişi yoklama verdi</div>
+                    </div>
+                    <a class="view-btn" href="/report/{{ s.id }}" target="_blank">Kayıtları Gör</a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty">Henüz bir yoklama oturumu oluşturmadınız.</div>
+        {% endif %}
+    </main>
+</body>
+</html>

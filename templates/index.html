@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dinamik QR ile Yoklama</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            min-height: 100vh;
+            color: #1f2937;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 32px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            color: #fff;
+            font-weight: 700;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-buttons { display: flex; gap: 10px; }
+
+        .nav-btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: opacity 0.15s;
+        }
+
+        .nav-btn:hover { opacity: 0.85; }
+
+        .nav-btn.ghost {
+            color: #fff;
+            border: 1.5px solid rgba(255,255,255,0.6);
+        }
+
+        .nav-btn.solid {
+            color: #4f46e5;
+            background: #fff;
+        }
+
+        main {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+            text-align: center;
+            color: #fff;
+        }
+
+        h1 {
+            font-size: 38px;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 16px;
+        }
+
+        .lead {
+            font-size: 17px;
+            opacity: 0.92;
+            max-width: 560px;
+            margin: 0 auto 36px;
+            line-height: 1.6;
+        }
+
+        .cta {
+            display: inline-block;
+            background: #fff;
+            color: #4f46e5;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 15px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .steps {
+            background: #fff;
+            border-radius: 20px;
+            padding: 36px 30px;
+            margin-top: 56px;
+            text-align: left;
+            color: #1f2937;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .steps h2 {
+            font-size: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+            color: #1f2937;
+        }
+
+        .step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .step:last-child { margin-bottom: 0; }
+
+        .step-num {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #eef2ff;
+            color: #4f46e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .step-text h3 {
+            font-size: 15px;
+            margin-bottom: 4px;
+            color: #1f2937;
+        }
+
+        .step-text p {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        .why {
+            margin-top: 32px;
+            font-size: 14px;
+            opacity: 0.85;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">📱 Dinamik QR Yoklama</div>
+        <div class="nav-buttons">
+            {% if user %}
+                <a class="nav-btn ghost" href="/logout">Çıkış Yap</a>
+                <a class="nav-btn solid" href="/dashboard">Panelim</a>
+            {% else %}
+                <a class="nav-btn ghost" href="/login">Giriş Yap</a>
+                <a class="nav-btn solid" href="/register">Hesap Oluştur</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main>
+        <h1>Yoklamayı sahte imzadan kurtarın</h1>
+        <p class="lead">
+            Her 10 saniyede bir yenilenen bir QR kod gösterin. Öğrenciler telefonlarıyla
+            okutup birkaç saniyede yoklamalarını onaylasın. Kağıt yok, arkadaşınıza imza
+            attırma yok, sonradan eklenen isim yok.
+        </p>
+        <a class="cta" href="{{ '/dashboard' if user else '/register' }}">
+            {{ 'Panelime git' if user else 'Ücretsiz başla' }}
+        </a>
+
+        <div class="steps">
+            <h2>Nasıl çalışır?</h2>
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-text">
+                    <h3>QR kodu ekrana yansıtın</h3>
+                    <p>Panelinizden "Yeni QR Oluştur"a basın, projeksiyona veya sınıf ekranına yansıtın.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-text">
+                    <h3>QR sürekli kendini yeniler</h3>
+                    <p>Kod her 10 saniyede bir değişir, böylece bir öğrenci ekran görüntüsünü başkasına gönderip onun yerine yoklama girdiremez.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-text">
+                    <h3>Öğrenci telefonuyla okutur</h3>
+                    <p>Kamerayla okutulan QR, öğrenciyi ad soyad ve öğrenci numarasını gireceği kısa bir forma yönlendirir.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-text">
+                    <h3>Sonuçları anında görün</h3>
+                    <p>Panelinizden kimlerin katıldığını, ne zaman girdiğini anlık olarak takip edin; geçmiş tüm oturumlarınız kayıtlı kalır.</p>
+                </div>
+            </div>
+        </div>
+
+        <p class="why">
+            Her öğretim üyesinin kendi hesabı ve kendine özel QR oturumları vardır —
+            oturumlarınızı ve yoklama kayıtlarınızı yalnızca siz görebilirsiniz.
+        </p>
+    </main>
+</body>
+</html>

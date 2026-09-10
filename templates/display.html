@@ -2,29 +2,112 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Yoklama QR Kodu</title>
-    <meta http-equiv="refresh" content="10">
+    {% if active %}
+        <meta http-equiv="refresh" content="10">
+    {% endif %}
     <style>
+        * { box-sizing: border-box; }
         body {
             background: #111;
             color: #fff;
-            font-family: sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             text-align: center;
             padding-top: 60px;
+            min-height: 100vh;
+            margin: 0;
         }
         img {
-            width: 400px;
-            height: 400px;
+            width: 360px;
+            max-width: 80vw;
+            height: 360px;
+            max-height: 80vw;
             background: white;
             padding: 20px;
             border-radius: 12px;
         }
-        h1 { font-weight: 300; }
+        h1 { font-weight: 300; font-size: 26px; }
+        p.hint { color: #9ca3af; margin-top: 10px; }
+
+        form { margin-top: 30px; display: inline-block; }
+
+        .stop-btn {
+            padding: 12px 28px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background: #ef4444;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .actions a {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 10px;
+        }
+
+        .actions a.primary {
+            color: #fff;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+
+        .actions a.secondary {
+            color: #fff;
+            border: 1.5px solid #4b5563;
+        }
+
+        .check {
+            width: 56px;
+            height: 56px;
+            background: #1f2937;
+            color: #4ade80;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 26px;
+        }
     </style>
 </head>
 <body>
-    <h1>Telefonunuzla QR kodu okutun</h1>
-    <img src="/qr.png?ts={{ range(1, 99999) | random }}" alt="QR Kod">
-    <p>Kod her 10 saniyede bir yenilenir.</p>
+    {% if active %}
+        <h1>Telefonunuzla QR kodu okutun</h1>
+        <img src="/qr.png?ts={{ range(1, 99999) | random }}" alt="QR Kod">
+        <p class="hint">Kod her 10 saniyede bir yenilenir.</p>
+
+        <form method="POST" action="/end-session">
+            <button type="submit" class="stop-btn">Oturumu Durdur</button>
+        </form>
+    {% elif ended_session_id %}
+        <div class="check">✓</div>
+        <h1>Oturum durduruldu</h1>
+        <p class="hint">Yoklama artık kabul edilmiyor.</p>
+
+        <div class="actions">
+            <a class="primary" href="/dashboard">Profile Dön</a>
+            <a class="secondary" href="/report/{{ ended_session_id }}">Kaydolan İsimlere Git</a>
+        </div>
+    {% else %}
+        <h1>Oturum henüz başlatılmadı</h1>
+        <p class="hint">Panelinizden "Yeni QR Oluştur" butonuna basın.</p>
+
+        <div class="actions">
+            <a class="primary" href="/dashboard">Panele Dön</a>
+        </div>
+    {% endif %}
 </body>
 </html>

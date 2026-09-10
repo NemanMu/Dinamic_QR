@@ -4,14 +4,38 @@
     <meta charset="UTF-8">
     <title>Yoklama Raporu</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 16px; }
+        * { box-sizing: border-box; }
+        body { font-family: sans-serif; max-width: 600px; margin: 0 auto 40px; padding: 0 16px; }
         table { width: 100%; border-collapse: collapse; }
         td, th { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background: #f3f4f6; }
+
+        .topbar {
+            display: flex;
+            justify-content: flex-end;
+            padding: 20px 0 4px;
+        }
+
+        .topbar a {
+            font-size: 13px;
+            font-weight: 600;
+            color: #4f46e5;
+            text-decoration: none;
+            border: 1.5px solid #e0e7ff;
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+
+        .topbar a:hover { background: #eef2ff; }
     </style>
 </head>
 <body>
+    <div class="topbar">
+        <a href="/dashboard">Profile Dön</a>
+    </div>
+
     <h2>Alınan Yoklamalar ({{ rows|length }})</h2>
+    {% if created_at %}<p style="color:#6b7280;margin-bottom:16px;">Oturum tarihi: {{ created_at }}</p>{% endif %}
     <table>
         <tr><th>Ad Soyad</th><th>Öğrenci No</th><th>Zaman</th></tr>
         {% for full_name, student_id, ts in rows %}

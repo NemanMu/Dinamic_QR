@@ -1,3 +1,6 @@
 Flask
 pyotp
-qrcode[pil]
+qrcode
+Pillow
+Werkzeug
+gunicorn

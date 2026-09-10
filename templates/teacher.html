@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Yoklama Kontrol Paneli</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: #fff;
+            width: 100%;
+            max-width: 420px;
+            border-radius: 20px;
+            padding: 36px 28px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .icon {
+            width: 56px;
+            height: 56px;
+            background: #eef2ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            font-size: 28px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 22px;
+            color: #1f2937;
+            margin: 0 0 6px;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 26px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .status.active {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status.inactive {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .count {
+            text-align: center;
+            color: #4b5563;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .count strong {
+            color: #1f2937;
+            font-size: 20px;
+        }
+
+        button, a.btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            text-decoration: none;
+            transition: transform 0.1s, opacity 0.15s;
+        }
+
+        button:active, a.btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            color: #fff;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+
+        .btn-danger {
+            color: #fff;
+            background: #ef4444;
+        }
+
+        .btn-secondary {
+            color: #374151;
+            background: #f3f4f6;
+        }
+
+        form { margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">🎓</div>
+        <h1>Yoklama Kontrol Paneli</h1>
+        <p class="subtitle">Oturumu buradan başlatın ve yönetin</p>
+
+        {% if active %}
+            <div class="status active"><span class="dot"></span> Oturum aktif</div>
+        {% else %}
+            <div class="status inactive"><span class="dot"></span> Oturum başlatılmadı</div>
+        {% endif %}
+
+        <div class="count">Bu oturumda <strong>{{ count }}</strong> yoklama alındı</div>
+
+        {% if active %}
+            <a class="btn btn-primary" href="/display" target="_blank">QR Ekranını Aç</a>
+            <a class="btn btn-secondary" href="/report" target="_blank">Yoklama Raporunu Gör</a>
+            <form method="POST" action="/end-session">
+                <button type="submit" class="btn-danger">Oturumu Sonlandır</button>
+            </form>
+        {% else %}
+            <form method="POST" action="/new-session">
+                <button type="submit" class="btn-primary">Yeni Yoklama Oturumu Başlat</button>
+            </form>
+            <a class="btn btn-secondary" href="/report" target="_blank">Geçmiş Raporu Gör</a>
+        {% endif %}
+    </div>
+</body>
+</html>
