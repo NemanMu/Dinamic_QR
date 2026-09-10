@@ -59,10 +59,26 @@
         }
 
         .section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             color: #fff;
             font-size: 15px;
             font-weight: 700;
             margin: 28px 0 12px 4px;
+        }
+
+        .delete-all-btn {
+            width: auto;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            background: #ef4444;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 4px;
         }
 
         .session-card {
@@ -127,7 +143,14 @@
             <p>Deleted sessions are kept here. Deleting forever cannot be undone.</p>
         </div>
 
-        <div class="section-title">Deleted Sessions</div>
+        <div class="section-title">
+            <span>Deleted Sessions</span>
+            {% if sessions %}
+                <form method="POST" action="/trash/delete-all" onsubmit="return confirm('Delete ALL sessions in Trash forever? This cannot be undone.');">
+                    <button type="submit" class="delete-all-btn">Delete All</button>
+                </form>
+            {% endif %}
+        </div>
 
         {% if sessions %}
             {% for s in sessions %}

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Settings</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 32px;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .logo { color: #fff; font-weight: 700; font-size: 18px; }
+
+        .nav-buttons { display: flex; gap: 14px; align-items: center; }
+
+        .nav-buttons a {
+            color: #fff;
+            font-size: 14px;
+            text-decoration: none;
+            opacity: 0.9;
+        }
+
+        main {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 10px 24px 60px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .card h1 {
+            font-size: 20px;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .card p.subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .saved-banner {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .field {
+            margin-bottom: 22px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .field-hint {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 6px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 13px 14px;
+            font-size: 15px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        input[type="number"]:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .toggle-row .toggle-text h3 {
+            font-size: 14px;
+            color: #1f2937;
+            margin-bottom: 2px;
+        }
+
+        .toggle-row .toggle-text p {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .switch {
+            position: relative;
+            width: 46px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #d1d5db;
+            border-radius: 999px;
+            transition: 0.2s;
+        }
+
+        .slider::before {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            left: 3px;
+            top: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+
+        .switch input:checked + .slider {
+            background: #4f46e5;
+        }
+
+        .switch input:checked + .slider::before {
+            transform: translateX(20px);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">📱 Dynamic QR Attendance</div>
+        <div class="nav-buttons">
+            <a href="/dashboard">← Dashboard</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="card">
+            <h1>Settings</h1>
+            <p class="subtitle">Configure how your QR code behaves</p>
+
+            {% if saved %}
+                <div class="saved-banner">✓ Settings saved</div>
+            {% endif %}
+
+            <form method="POST" action="/settings">
+                <div class="field">
+                    <label for="qr_interval_seconds">QR Code Duration (seconds)</label>
+                    <input
+                        type="number"
+                        id="qr_interval_seconds"
+                        name="qr_interval_seconds"
+                        min="{{ min_interval }}"
+                        max="{{ max_interval }}"
+                        value="{{ settings.qr_interval_seconds }}"
+                        required
+                    >
+                    <div class="field-hint">How often the QR code refreshes ({{ min_interval }}–{{ max_interval }} seconds). Only applies while auto-refresh is on.</div>
+                </div>
+
+                <div class="field">
+                    <label for="qr_size">QR Code Size (pixels)</label>
+                    <input
+                        type="number"
+                        id="qr_size"
+                        name="qr_size"
+                        min="{{ min_size }}"
+                        max="{{ max_size }}"
+                        value="{{ settings.qr_size }}"
+                        required
+                    >
+                    <div class="field-hint">Display size of the QR code ({{ min_size }}–{{ max_size }} pixels).</div>
+                </div>
+
+                <div class="field">
+                    <div class="toggle-row">
+                        <div class="toggle-text">
+                            <h3>Auto-Refresh (Expiring QR)</h3>
+                            <p>When on, the QR code expires and rotates automatically.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="auto_refresh_enabled" {% if settings.auto_refresh_enabled %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit">Save Settings</button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

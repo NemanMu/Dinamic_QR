@@ -9,6 +9,7 @@ from functools import wraps
 
 import pyotp
 import qrcode
+from PIL import Image
 from flask import Flask, request, render_template, send_file, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -19,6 +20,13 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 
 QR_INTERVAL_SECONDS = 10
 FORM_SESSION_TIMEOUT_SECONDS = 600
+
+DEFAULT_QR_SIZE = 360
+MIN_QR_INTERVAL_SECONDS = 3
+MAX_QR_INTERVAL_SECONDS = 300
+MIN_QR_SIZE = 120
+MAX_QR_SIZE = 600
+STATIC_QR_INTERVAL_SECONDS = 21600
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -73,24 +81,28 @@ def init_db():
                 created_at DOUBLE PRECISION NOT NULL
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS user_settings (
+                teacher_id INTEGER PRIMARY KEY,
+                qr_interval_seconds INTEGER NOT NULL DEFAULT 10,
+                qr_size INTEGER NOT NULL DEFAULT 360,
+                auto_refresh_enabled BOOLEAN NOT NULL DEFAULT TRUE
+            )
+        """)
 
         conn.execute("ALTER TABLE attendance ADD COLUMN IF NOT EXISTS crn TEXT")
         conn.execute("ALTER TABLE class_sessions ADD COLUMN IF NOT EXISTS deleted_at TEXT")
 
-
 init_db()
-
 
 def cleanup_expired_scans(conn):
     cutoff = time.time() - FORM_SESSION_TIMEOUT_SECONDS
     conn.execute("DELETE FROM pending_scans WHERE created_at < %s", (cutoff,))
 
-
 def format_dt(iso_string):
     if not iso_string:
         return None
     return datetime.fromisoformat(iso_string).strftime("%d.%m.%Y %H:%M")
-
 
 def get_user_by_id(user_id):
     conn = get_db()
@@ -102,13 +114,30 @@ def get_user_by_id(user_id):
         return None
     return {"id": row[0], "name": row[1], "email": row[2]}
 
+def get_user_settings(user_id):
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO user_settings (teacher_id) VALUES (%s) ON CONFLICT (teacher_id) DO NOTHING",
+        (user_id,),
+    )
+    conn.commit()
+    row = conn.execute(
+        "SELECT qr_interval_seconds, qr_size, auto_refresh_enabled FROM user_settings WHERE teacher_id = %s",
+        (user_id,),
+    ).fetchone()
+    conn.close()
+    return {
+        "qr_interval_seconds": row[0],
+        "qr_size": row[1],
+        "auto_refresh_enabled": row[2],
+    }
+
 
 def current_user():
     user_id = session.get("user_id")
     if user_id is None:
         return None
     return get_user_by_id(user_id)
-
 
 def login_required(view_func):
     @wraps(view_func)
@@ -118,13 +147,9 @@ def login_required(view_func):
         return view_func(*args, **kwargs)
     return wrapped
 
-
-
 @app.route("/")
 def landing():
     return render_template("index.html", user=current_user())
-
-
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -186,6 +211,52 @@ def logout():
     session.clear()
     return redirect(url_for("landing"))
 
+@app.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings_page():
+    user = current_user()
+
+    if request.method == "POST":
+        try:
+            interval = int(request.form.get("qr_interval_seconds", QR_INTERVAL_SECONDS))
+        except ValueError:
+            interval = QR_INTERVAL_SECONDS
+        interval = max(MIN_QR_INTERVAL_SECONDS, min(MAX_QR_INTERVAL_SECONDS, interval))
+
+        try:
+            size = int(request.form.get("qr_size", DEFAULT_QR_SIZE))
+        except ValueError:
+            size = DEFAULT_QR_SIZE
+        size = max(MIN_QR_SIZE, min(MAX_QR_SIZE, size))
+
+        auto_refresh_enabled = request.form.get("auto_refresh_enabled") == "on"
+
+        conn = get_db()
+        conn.execute(
+            "INSERT INTO user_settings (teacher_id, qr_interval_seconds, qr_size, auto_refresh_enabled) "
+            "VALUES (%s, %s, %s, %s) "
+            "ON CONFLICT (teacher_id) DO UPDATE SET "
+            "qr_interval_seconds = EXCLUDED.qr_interval_seconds, "
+            "qr_size = EXCLUDED.qr_size, "
+            "auto_refresh_enabled = EXCLUDED.auto_refresh_enabled",
+            (user["id"], interval, size, auto_refresh_enabled),
+        )
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for("settings_page", saved=1))
+
+    settings = get_user_settings(user["id"])
+    return render_template(
+        "settings.html",
+        user=user,
+        settings=settings,
+        saved=request.args.get("saved") == "1",
+        min_interval=MIN_QR_INTERVAL_SECONDS,
+        max_interval=MAX_QR_INTERVAL_SECONDS,
+        min_size=MIN_QR_SIZE,
+        max_size=MAX_QR_SIZE,
+    )
 
 
 @app.route("/dashboard")
@@ -225,7 +296,6 @@ def dashboard():
         sessions=past_sessions,
     )
 
-
 @app.route("/new-session", methods=["POST"])
 @login_required
 def new_session():
@@ -239,12 +309,22 @@ def new_session():
             (datetime.now().isoformat(), old_info["class_session_id"]),
         )
 
+    settings = get_user_settings(user["id"])
+    totp_interval = (
+        settings["qr_interval_seconds"]
+        if settings["auto_refresh_enabled"]
+        else STATIC_QR_INTERVAL_SECONDS
+    )
+
     class_session_id = str(uuid.uuid4())
     secret = pyotp.random_base32()
     active_sessions[user["id"]] = {
         "secret": secret,
-        "totp": pyotp.TOTP(secret, interval=QR_INTERVAL_SECONDS, digits=8),
+        "totp": pyotp.TOTP(secret, interval=totp_interval, digits=8),
         "class_session_id": class_session_id,
+        "qr_size": settings["qr_size"],
+        "auto_refresh_enabled": settings["auto_refresh_enabled"],
+        "refresh_interval": settings["qr_interval_seconds"],
     }
 
     conn.execute(
@@ -256,7 +336,6 @@ def new_session():
     conn.close()
 
     return redirect(url_for("display"))
-
 
 @app.route("/end-session", methods=["POST"])
 @login_required
@@ -276,7 +355,6 @@ def end_session():
         conn.close()
 
     return redirect(url_for("display", ended=ended_session_id))
-
 
 @app.route("/delete-session/<session_id>", methods=["POST"])
 @login_required
@@ -305,7 +383,6 @@ def delete_session(session_id):
 
     return redirect(url_for("dashboard"))
 
-
 @app.route("/trash")
 @login_required
 def trash():
@@ -333,6 +410,31 @@ def trash():
     conn.close()
 
     return render_template("trash.html", user=user, sessions=trashed_sessions)
+
+@app.route("/trash/delete-all", methods=["POST"])
+@login_required
+def trash_delete_all():
+    user = current_user()
+
+    conn = get_db()
+    conn.execute(
+        "DELETE FROM attendance WHERE teacher_id = %s AND class_session_id IN "
+        "(SELECT id FROM class_sessions WHERE teacher_id = %s AND deleted_at IS NOT NULL)",
+        (user["id"], user["id"]),
+    )
+    conn.execute(
+        "DELETE FROM pending_scans WHERE teacher_id = %s AND class_session_id IN "
+        "(SELECT id FROM class_sessions WHERE teacher_id = %s AND deleted_at IS NOT NULL)",
+        (user["id"], user["id"]),
+    )
+    conn.execute(
+        "DELETE FROM class_sessions WHERE teacher_id = %s AND deleted_at IS NOT NULL",
+        (user["id"],),
+    )
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("trash"))
 
 
 @app.route("/trash/delete/<session_id>", methods=["POST"])
@@ -364,7 +466,6 @@ def trash_delete_forever(session_id):
 
     return redirect(url_for("trash"))
 
-
 @app.route("/display")
 @login_required
 def display():
@@ -375,8 +476,10 @@ def display():
         "display.html",
         active=info is not None,
         ended_session_id=ended_session_id,
+        qr_size=info["qr_size"] if info else DEFAULT_QR_SIZE,
+        refresh_interval=info["refresh_interval"] if info else QR_INTERVAL_SECONDS,
+        auto_refresh_enabled=info["auto_refresh_enabled"] if info else True,
     )
-
 
 @app.route("/qr.png")
 @login_required
@@ -390,11 +493,17 @@ def qr_png():
     attend_url = f"{request.host_url}attend?token={token}&t={user['id']}"
 
     img = qrcode.make(attend_url)
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    buf.seek(0)
-    return send_file(buf, mimetype="image/png")
+    raw_buf = io.BytesIO()
+    img.save(raw_buf, format="PNG")
+    raw_buf.seek(0)
 
+    size = info.get("qr_size", DEFAULT_QR_SIZE)
+    resized = Image.open(raw_buf).convert("RGB").resize((size, size), Image.NEAREST)
+    buf = io.BytesIO()
+    resized.save(buf, format="PNG")
+    buf.seek(0)
+
+    return send_file(buf, mimetype="image/png")
 
 @app.route("/attend", methods=["GET"])
 def attend_form():
@@ -430,7 +539,6 @@ def attend_form():
     conn.close()
 
     return render_template("attend.html", error=None, session_id=session_id)
-
 
 @app.route("/attend", methods=["POST"])
 def attend_submit():
@@ -481,8 +589,6 @@ def attend_submit():
 
     return render_template("success.html", message=message)
 
-
-
 @app.route("/report/<session_id>")
 @login_required
 def report_detail(session_id):
@@ -507,7 +613,6 @@ def report_detail(session_id):
     return render_template(
         "report.html", rows=rows, created_at=format_dt(owner_row[1])
     )
-
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)

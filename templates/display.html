@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Attendance QR Code</title>
-    {% if active %}
-        <meta http-equiv="refresh" content="10">
+    {% if active and auto_refresh_enabled %}
+        <meta http-equiv="refresh" content="{{ refresh_interval }}">
     {% endif %}
     <style>
         * { box-sizing: border-box; }
@@ -19,9 +19,7 @@
             margin: 0;
         }
         img {
-            width: 360px;
             max-width: 80vw;
-            height: 360px;
             max-height: 80vw;
             background: white;
             padding: 20px;
@@ -86,8 +84,15 @@
 <body>
     {% if active %}
         <h1>Scan the QR Code with Your Phone</h1>
-        <img src="/qr.png?ts={{ range(1, 99999) | random }}" alt="QR Code">
-        <p class="hint">The code refreshes every 10 seconds.</p>
+        <img src="/qr.png?ts={{ range(1, 99999) | random }}" alt="QR Code" style="width:{{ qr_size }}px; height:{{ qr_size }}px;">
+        {% if auto_refresh_enabled %}
+            <p class="hint">The code refreshes every {{ refresh_interval }} seconds.</p>
+        {% else %}
+            <p class="hint">Auto-refresh is off — this code stays active until you end the session.</p>
+            <div class="actions">
+                <a class="secondary" href="/display">Refresh Now</a>
+            </div>
+        {% endif %}
 
         <form method="POST" action="/end-session">
             <button type="submit" class="stop-btn">End Session</button>
