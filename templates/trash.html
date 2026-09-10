@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trash</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            min-height: 100vh;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 32px;
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .logo { color: #fff; font-weight: 700; font-size: 18px; }
+
+        .nav-buttons { display: flex; gap: 14px; align-items: center; }
+
+        .nav-buttons a {
+            color: #fff;
+            font-size: 14px;
+            text-decoration: none;
+            opacity: 0.9;
+        }
+
+        main {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 10px 24px 60px;
+        }
+
+        .header-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .header-card h1 {
+            font-size: 20px;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .header-card p {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .section-title {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            margin: 28px 0 12px 4px;
+        }
+
+        .session-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.1);
+        }
+
+        .session-info .date {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .session-info .meta {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        form { margin: 0; }
+
+        .session-card button.delete-forever-btn {
+            width: auto;
+            flex-shrink: 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            background: #ef4444;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .empty {
+            color: rgba(255,255,255,0.85);
+            font-size: 14px;
+            text-align: center;
+            padding: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">📱 Dynamic QR Attendance</div>
+        <div class="nav-buttons">
+            <a href="/dashboard">← Back to Dashboard</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="header-card">
+            <h1>Trash</h1>
+            <p>Deleted sessions are kept here. Deleting forever cannot be undone.</p>
+        </div>
+
+        <div class="section-title">Deleted Sessions</div>
+
+        {% if sessions %}
+            {% for s in sessions %}
+                <div class="session-card">
+                    <div class="session-info">
+                        <div class="date">{{ s.created_at }}</div>
+                        <div class="meta">{{ s.count }} records · Deleted {{ s.deleted_at }}</div>
+                    </div>
+                    <form method="POST" action="/trash/delete/{{ s.id }}" onsubmit="return confirm('Delete this session forever? This cannot be undone.');">
+                        <button type="submit" class="delete-forever-btn">Delete Forever</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty">Trash is empty.</div>
+        {% endif %}
+    </main>
+</body>
+</html>

@@ -74,6 +74,9 @@ def init_db():
             )
         """)
 
+        conn.execute("ALTER TABLE attendance ADD COLUMN IF NOT EXISTS crn TEXT")
+        conn.execute("ALTER TABLE class_sessions ADD COLUMN IF NOT EXISTS deleted_at TEXT")
+
 
 init_db()
 
@@ -194,7 +197,7 @@ def dashboard():
     conn = get_db()
     session_rows = conn.execute(
         "SELECT id, created_at, ended_at FROM class_sessions "
-        "WHERE teacher_id = %s ORDER BY created_at DESC",
+        "WHERE teacher_id = %s AND deleted_at IS NULL ORDER BY created_at DESC",
         (user["id"],),
     ).fetchall()
 
@@ -228,7 +231,6 @@ def dashboard():
 def new_session():
     user = current_user()
 
-    # Zaten aktif bir oturum varsa, yenisini başlatmadan önce onu kapat.
     old_info = active_sessions.pop(user["id"], None)
     conn = get_db()
     if old_info:
@@ -274,6 +276,93 @@ def end_session():
         conn.close()
 
     return redirect(url_for("display", ended=ended_session_id))
+
+
+@app.route("/delete-session/<session_id>", methods=["POST"])
+@login_required
+def delete_session(session_id):
+    user = current_user()
+
+    conn = get_db()
+    owner_row = conn.execute(
+        "SELECT teacher_id FROM class_sessions WHERE id = %s", (session_id,)
+    ).fetchone()
+
+    if owner_row is None or owner_row[0] != user["id"]:
+        conn.close()
+        return "Bu oturum bulunamadı.", 404
+
+    conn.execute(
+        "UPDATE class_sessions SET deleted_at = %s WHERE id = %s",
+        (datetime.now().isoformat(), session_id),
+    )
+    conn.commit()
+    conn.close()
+
+    active_info = active_sessions.get(user["id"])
+    if active_info and active_info["class_session_id"] == session_id:
+        active_sessions.pop(user["id"], None)
+
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/trash")
+@login_required
+def trash():
+    user = current_user()
+
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, created_at, deleted_at FROM class_sessions "
+        "WHERE teacher_id = %s AND deleted_at IS NOT NULL ORDER BY deleted_at DESC",
+        (user["id"],),
+    ).fetchall()
+
+    trashed_sessions = []
+    for sid, created_at, deleted_at in rows:
+        count = conn.execute(
+            "SELECT COUNT(*) FROM attendance WHERE teacher_id = %s AND class_session_id = %s",
+            (user["id"], sid),
+        ).fetchone()[0]
+        trashed_sessions.append({
+            "id": sid,
+            "created_at": format_dt(created_at),
+            "deleted_at": format_dt(deleted_at),
+            "count": count,
+        })
+    conn.close()
+
+    return render_template("trash.html", user=user, sessions=trashed_sessions)
+
+
+@app.route("/trash/delete/<session_id>", methods=["POST"])
+@login_required
+def trash_delete_forever(session_id):
+    user = current_user()
+
+    conn = get_db()
+    owner_row = conn.execute(
+        "SELECT teacher_id FROM class_sessions WHERE id = %s AND deleted_at IS NOT NULL",
+        (session_id,),
+    ).fetchone()
+
+    if owner_row is None or owner_row[0] != user["id"]:
+        conn.close()
+        return "Bu oturum bulunamadı.", 404
+
+    conn.execute(
+        "DELETE FROM attendance WHERE teacher_id = %s AND class_session_id = %s",
+        (user["id"], session_id),
+    )
+    conn.execute(
+        "DELETE FROM pending_scans WHERE teacher_id = %s AND class_session_id = %s",
+        (user["id"], session_id),
+    )
+    conn.execute("DELETE FROM class_sessions WHERE id = %s", (session_id,))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("trash"))
 
 
 @app.route("/display")
@@ -348,6 +437,7 @@ def attend_submit():
     session_id = request.form.get("session_id", "")
     full_name = request.form.get("full_name", "").strip()
     student_id = request.form.get("student_id", "").strip()
+    crn = request.form.get("crn", "").strip() or None
 
     conn = get_db()
     cleanup_expired_scans(conn)
@@ -377,8 +467,8 @@ def attend_submit():
 
     try:
         conn.execute(
-            "INSERT INTO attendance (teacher_id, class_session_id, full_name, student_id, timestamp) VALUES (%s, %s, %s, %s, %s)",
-            (teacher_id, class_session_id, full_name, student_id, datetime.now().isoformat()),
+            "INSERT INTO attendance (teacher_id, class_session_id, full_name, student_id, timestamp, crn) VALUES (%s, %s, %s, %s, %s, %s)",
+            (teacher_id, class_session_id, full_name, student_id, datetime.now().isoformat(), crn),
         )
         conn.commit()
         message = f"{full_name} ({student_id}) için yoklama kaydedildi."
@@ -408,7 +498,7 @@ def report_detail(session_id):
         return "Bu oturum bulunamadı.", 404
 
     rows = conn.execute(
-        "SELECT full_name, student_id, timestamp FROM attendance "
+        "SELECT full_name, student_id, crn FROM attendance "
         "WHERE teacher_id = %s AND class_session_id = %s ORDER BY timestamp",
         (user["id"], session_id),
     ).fetchall()

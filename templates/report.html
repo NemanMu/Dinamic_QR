@@ -37,9 +37,9 @@
     <h2>Attendance Records ({{ rows|length }})</h2>
     {% if created_at %}<p style="color:#6b7280;margin-bottom:16px;">Session Date: {{ created_at }}</p>{% endif %}
     <table>
-        <tr><th>Full Name</th><th>Student ID</th><th>Time</th></tr>
-        {% for full_name, student_id, ts in rows %}
-        <tr><td>{{ full_name }}</td><td>{{ student_id }}</td><td>{{ ts }}</td></tr>
+        <tr><th>Full Name</th><th>Student ID</th><th>CRN</th></tr>
+        {% for full_name, student_id, crn in rows %}
+        <tr><td>{{ full_name }}</td><td>{{ student_id }}</td><td>{{ crn if crn else '-' }}</td></tr>
         {% endfor %}
     </table>
 </body>
