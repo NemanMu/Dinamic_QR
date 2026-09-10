@@ -471,9 +471,9 @@ def attend_submit():
             (teacher_id, class_session_id, full_name, student_id, datetime.now().isoformat(), crn),
         )
         conn.commit()
-        message = f"{full_name} ({student_id}) için yoklama kaydedildi."
+        message = f"Attendance has been recorded for {full_name} ({student_id})."
     except psycopg.IntegrityError:
-        message = "Bu yoklama zaten kaydedilmiş görünüyor."
+        message = "This attendance has already been recorded."
     finally:
         conn.execute("DELETE FROM pending_scans WHERE session_id = %s", (session_id,))
         conn.commit()
