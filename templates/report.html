@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Yoklama Raporu</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f3f4f6; }
+    </style>
+</head>
+<body>
+    <h2>Alınan Yoklamalar ({{ rows|length }})</h2>
+    <table>
+        <tr><th>Ad Soyad</th><th>Öğrenci No</th><th>Zaman</th></tr>
+        {% for full_name, student_id, ts in rows %}
+        <tr><td>{{ full_name }}</td><td>{{ student_id }}</td><td>{{ ts }}</td></tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Yoklama Girişi</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: #fff;
+            width: 100%;
+            max-width: 380px;
+            border-radius: 20px;
+            padding: 36px 28px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .icon {
+            width: 56px;
+            height: 56px;
+            background: #eef2ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            font-size: 28px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 22px;
+            color: #1f2937;
+            margin: 0 0 6px;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 28px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 13px 14px;
+            font-size: 15px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: transform 0.1s, opacity 0.15s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .error-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">📋</div>
+
+        {% if error %}
+            <h1>Yoklama Alınamadı</h1>
+            <div class="error-box">{{ error }}</div>
+        {% else %}
+            <h1>Yoklama Girişi</h1>
+            <p class="subtitle">Bilgilerinizi girip yoklamanızı onaylayın</p>
+
+            <form method="POST" action="/attend">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+
+                <div class="field">
+                    <label for="full_name">Ad Soyad</label>
+                    <input type="text" id="full_name" name="full_name" placeholder="Örn. Ayşe Yılmaz" required autofocus>
+                </div>
+
+                <div class="field">
+                    <label for="student_id">Öğrenci Numarası</label>
+                    <input type="text" id="student_id" name="student_id" placeholder="Örn. 20231234" required>
+                </div>
+
+                <button type="submit">Yoklamayı Onayla</button>
+            </form>
+        {% endif %}
+    </div>
+</body>
+</html>
