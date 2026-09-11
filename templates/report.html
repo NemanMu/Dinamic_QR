@@ -13,6 +13,8 @@
         .topbar {
             display: flex;
             justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
             padding: 20px 0 4px;
         }
 
@@ -27,10 +29,24 @@
         }
 
         .topbar a:hover { background: #eef2ff; }
+
+        .topbar a.icon-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+        }
     </style>
 </head>
 <body>
     <div class="topbar">
+        <a class="icon-btn" href="/report/{{ session_id }}/download" title="Download">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3v12"></path>
+                <path d="M7 10l5 5 5-5"></path>
+                <path d="M5 21h14"></path>
+            </svg>
+        </a>
         <a href="/dashboard">Back to Profile</a>
     </div>
 

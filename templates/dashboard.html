@@ -187,6 +187,22 @@
             gap: 8px;
         }
 
+        .session-card a.download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1.5px solid #e0e7ff;
+            color: #4f46e5;
+            flex-shrink: 0;
+        }
+
+        .session-card a.download-btn:hover {
+            background: #eef2ff;
+        }
+
         .session-card a.view-btn {
             font-size: 13px;
             font-weight: 600;
@@ -274,6 +290,13 @@
                         <div class="meta">{{ s.count }} people submitted attendance</div>
                     </div>
                     <div class="session-actions">
+                        <a class="download-btn" href="/report/{{ s.id }}/download" title="Download">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 3v12"></path>
+                                <path d="M7 10l5 5 5-5"></path>
+                                <path d="M5 21h14"></path>
+                            </svg>
+                        </a>
                         <a class="view-btn" href="/report/{{ s.id }}" target="_blank">View Records</a>
                         <form method="POST" action="/delete-session/{{ s.id }}" onsubmit="return confirm('Move this session to Trash?');">
                             <button type="submit" class="delete-btn">Delete</button>

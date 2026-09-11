@@ -10,6 +10,8 @@ from functools import wraps
 import pyotp
 import qrcode
 from PIL import Image
+from openpyxl import Workbook
+from openpyxl.styles import Font
 from flask import Flask, request, render_template, send_file, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -671,7 +673,55 @@ def report_detail(session_id):
     conn.close()
 
     return render_template(
-        "report.html", rows=rows, created_at=format_dt(owner_row[1])
+        "report.html", rows=rows, created_at=format_dt(owner_row[1]), session_id=session_id
+    )
+
+
+@app.route("/report/<session_id>/download")
+@login_required
+def report_download(session_id):
+    user = current_user()
+
+    conn = get_db()
+    owner_row = conn.execute(
+        "SELECT teacher_id FROM class_sessions WHERE id = %s", (session_id,)
+    ).fetchone()
+
+    if owner_row is None or owner_row[0] != user["id"]:
+        conn.close()
+        return "Bu oturum bulunamadı.", 404
+
+    rows = conn.execute(
+        "SELECT full_name, student_id, crn FROM attendance "
+        "WHERE teacher_id = %s AND class_session_id = %s ORDER BY timestamp",
+        (user["id"], session_id),
+    ).fetchall()
+    conn.close()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Attendance"
+
+    headers = ["Full Name", "Student ID", "CRN"]
+    ws.append(headers)
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+
+    for full_name, student_id, crn in rows:
+        ws.append([full_name, student_id, crn or ""])
+
+    for i, width in enumerate([28, 18, 14], start=1):
+        ws.column_dimensions[ws.cell(row=1, column=i).column_letter].width = width
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    return send_file(
+        buf,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=f"attendance_{session_id}.xlsx",
     )
 
 if __name__ == "__main__":
