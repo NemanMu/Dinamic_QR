@@ -684,7 +684,7 @@ def report_download(session_id):
 
     conn = get_db()
     owner_row = conn.execute(
-        "SELECT teacher_id FROM class_sessions WHERE id = %s", (session_id,)
+        "SELECT teacher_id, created_at FROM class_sessions WHERE id = %s", (session_id,)
     ).fetchone()
 
     if owner_row is None or owner_row[0] != user["id"]:
@@ -702,16 +702,21 @@ def report_download(session_id):
     ws = wb.active
     ws.title = "Attendance"
 
+    ws["A1"] = "Session Date:"
+    ws["A1"].font = Font(bold=True)
+    ws["A2"] = format_dt(owner_row[1])
+
     headers = ["Full Name", "Student ID", "CRN"]
+    ws.append([])
     ws.append(headers)
-    for cell in ws[1]:
+    for cell in ws[4]:
         cell.font = Font(bold=True)
 
     for full_name, student_id, crn in rows:
         ws.append([full_name, student_id, crn or ""])
 
     for i, width in enumerate([28, 18, 14], start=1):
-        ws.column_dimensions[ws.cell(row=1, column=i).column_letter].width = width
+        ws.column_dimensions[ws.cell(row=4, column=i).column_letter].width = width
 
     buf = io.BytesIO()
     wb.save(buf)
